@@ -1,26 +1,28 @@
 #!/bin/bash
 
 # Definición de colores
-ROJO='\033[0;31m'
-VERDE='\033[0;32m'
-AZUL='\033[0;34m'
-RESET='\033[0m'
+TITULO='\033[1;36m'  # Cyan brillante para título
+INTERFACE='\033[1;33m'  # Amarillo para nombre de la interfaz
+IP_COLOR='\033[1;32m'  # Verde brillante para la IP
+RESET='\033[0m'  # Resetear color
 
 # Título
-echo -e "${AZUL}===== Reporte de Interfaces de Red =====${RESET}"
-echo -e "${VERDE}Fecha: $(date)${RESET}"
-echo -e "${AZUL}==========================${RESET}\n"
+echo -e "${TITULO}===== Reporte de Interfaces de Red =====${RESET}"
+echo -e "${TITULO}Fecha: $(date)${RESET}"
+echo -e "${TITULO}==========================${RESET}\n"
 
 # Filtrar interfaces y mostrar nombre e inet (IP)
 ip a | grep -E '^[0-9]+:|inet' | grep -v '127.0.0.1' | while read -r line; do
     # Mostrar nombre de la interfaz
     if echo "$line" | grep -q '^[0-9]'; then
-        INTERFACE=$(echo "$line" | awk -F: '{print $2}' | tr -d ' ')
-        echo -e "\n${ROJO}${INTERFACE}${RESET}"
+        INTERFACE_NAME=$(echo "$line" | awk -F: '{print $2}' | tr -d ' ')
     fi
     # Mostrar dirección inet (IP)
     if echo "$line" | grep -q 'inet '; then
         IP=$(echo "$line" | awk '{print $2}' | sed 's/\/.*//')
-        echo -e "${VERDE}IP: ${IP}${RESET}"
+        if [ -n "$IP" ]; then
+            echo -e "\n${INTERFACE}${INTERFACE_NAME}${RESET}"
+            echo -e "${IP_COLOR}IP: ${IP}${RESET}"
+        fi
     fi
 done
