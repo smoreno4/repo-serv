@@ -1,32 +1,21 @@
 #!/bin/bash
 
-# Definir colores ANSI
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-BLUE='\033[1;34m'
-CYAN='\033[1;36m'
-NC='\033[0m' # Sin color
+# Definir nombre del archivo de salida
+REPORT_FILE="informe_red_docker.txt"
 
-# Nombre del archivo de salida con marca de tiempo
-REPORT_FILE="network_report_$(date +'%Y%m%d_%H%M%S').txt"
+# Obtener fecha actual
+DATE=$(date)
 
-# Encabezado del informe
-echo -e "${RED}===== Network Report =====${NC}" > "$REPORT_FILE"
-echo -e "${GREEN}Fecha: $(date)${NC}" >> "$REPORT_FILE"
-echo -e "${RED}==========================${NC}" >> "$REPORT_FILE"
+# Iniciar informe
+echo "===== Reporte del Sistema =====" > "$REPORT_FILE"
+echo "Fecha: $DATE" >> "$REPORT_FILE"
+echo "===============================" >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
 
-# Obtener información de las interfaces de red filtradas
-echo -e "${CYAN}>> Interfaces de Red Filtradas (eth, docker, br, n4m)${NC}" >> "$REPORT_FILE"
+# Ejecutar los scripts y guardar la salida
+bash red.sh >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
+bash docker.sh >> "$REPORT_FILE"
 
-# Extraer solo interfaces que contienen eth, docker, br o n4m y sus IPs
-ip a | awk '
-    /: eth|: docker|: br|: n4m/ {iface=$2; gsub(":", "", iface)}
-    /inet / {print iface, $2}
-' >> "$REPORT_FILE"
-
-echo "" >> "$REPORT_FILE"
-
-# Mostrar mensaje con la ubicación del informe
-echo -e "${BLUE}Informe generado: $REPORT_FILE${NC}"
+# Mostrar mensaje de confirmación
+echo "✅ Informe guardado en $REPORT_FILE"
