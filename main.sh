@@ -12,14 +12,22 @@ echo -e "${TITULO}Fecha: $(date)${RESET}"
 echo -e "${TITULO}==========================${RESET}\n"
 
 # Filtrar interfaces y mostrar nombre e inet (IP)
-ip a | grep -E '^[0-9]+:|inet' | grep -v '127.0.0.1' | while read -r line; do
+INTERFACE_NAME=""
+IP=""
+
+ip a | while read -r line; do
     # Mostrar nombre de la interfaz
     if echo "$line" | grep -q '^[0-9]'; then
+        # Guardar nombre de la interfaz
         INTERFACE_NAME=$(echo "$line" | awk -F: '{print $2}' | tr -d ' ')
     fi
+
     # Mostrar dirección inet (IP)
     if echo "$line" | grep -q 'inet '; then
+        # Guardar la IP
         IP=$(echo "$line" | awk '{print $2}' | sed 's/\/.*//')
+
+        # Solo mostrar interfaces con IP
         if [ -n "$IP" ]; then
             echo -e "\n${INTERFACE}${INTERFACE_NAME}${RESET}"
             echo -e "${IP_COLOR}IP: ${IP}${RESET}"
