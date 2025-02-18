@@ -1,59 +1,51 @@
 #!/bin/bash
 
+# Función para poner texto en color
+color_echo() {
+    case $1 in
+        "green")
+            echo -e "\033[32m$2\033[0m"
+            ;;
+        "yellow")
+            echo -e "\033[33m$2\033[0m"
+            ;;
+        "red")
+            echo -e "\033[31m$2\033[0m"
+            ;;
+        "blue")
+            echo -e "\033[34m$2\033[0m"
+            ;;
+        *)
+            echo -e "$2"
+            ;;
+    esac
+}
+
 # Mostrar fecha y título
-echo -e "=========================="
-echo -e "Fecha: $(date)"
-echo -e "=========================="
-echo -e ""
+color_echo "blue" "=========================="
+color_echo "blue" "Fecha: $(date)"
+color_echo "blue" "=========================="
+echo ""
 
 # Reporte de Interfaces de Red
-echo -e "===== Reporte de Interfaces de Red ====="
-echo -e ""
+color_echo "green" "===== Reporte de Interfaces de Red ====="
+echo ""
+
+# Mostrar interfaces de red con IP
 ip -br addr show | grep -E 'lo|eth|docker|br|veth|n4m' | while read line; do
-    # Filtrar y mostrar interfaces con IP
     if echo "$line" | grep -q 'inet'; then
         interface=$(echo "$line" | awk '{print $1}')
         ip_address=$(echo "$line" | awk '{print $3}')
-        echo -e "$interface"
-        echo -e "IP: $ip_address"
-        echo -e ""
+        color_echo "yellow" "$interface"
+        color_echo "green" "IP: $ip_address"
+        echo ""
     fi
 done
 
 # Reporte de Cron Jobs
-echo -e "===== Reporte de Cron Jobs ====="
-echo -e ""
-
-# Mostrar Cron Jobs del usuario root
-echo -e "Cron Jobs del usuario root:"
-crontab -l -u root 2>/dev/null || echo -e "No se encontraron Cron Jobs para el usuario root."
-echo -e ""
-
-# Mostrar archivos en cron.d
-echo -e "Archivos en /etc/cron.d:"
-ls /etc/cron.d/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.d."
-echo -e ""
-
-# Mostrar archivos en cron.daily
-echo -e "Archivos en /etc/cron.daily:"
-ls /etc/cron.daily/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.daily."
-echo -e ""
-
-# Mostrar archivos en cron.hourly
-echo -e "Archivos en /etc/cron.hourly:"
-ls /etc/cron.hourly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.hourly."
-echo -e ""
-
-# Mostrar archivos en cron.monthly
-echo -e "Archivos en /etc/cron.monthly:"
-ls /etc/cron.monthly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.monthly."
-echo -e ""
-
-# Mostrar archivos en cron.weekly
-echo -e "Archivos en /etc/cron.weekly:"
-ls /etc/cron.weekly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.weekly."
-echo -e ""
+color_echo "green" "===== Reporte de Cron Jobs ====="
+echo ""
 
 # Mostrar el contenido de /etc/crontab
-echo -e "Contenido de /etc/crontab:"
+color_echo "yellow" "Contenido de /etc/crontab:"
 cat /etc/crontab
