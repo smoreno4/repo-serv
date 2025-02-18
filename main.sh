@@ -29,3 +29,6 @@ docker ps --format "table {{.Names}}\t{{.ID}}\t{{.Status}}" >> "$INFORME"
 
 # Confirmación
 echo -e "${VERDE}✅ Informe guardado en $INFORME${RESET}"
+
+# Mostrar el contenido del archivo generado
+cat "$INFORME"
