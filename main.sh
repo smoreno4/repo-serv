@@ -1,45 +1,59 @@
 #!/bin/bash
 
-# Definir colores
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'  # No Color
+# Mostrar fecha y título
+echo -e "=========================="
+echo -e "Fecha: $(date)"
+echo -e "=========================="
+echo -e ""
 
-# Función para mostrar interfaces de red
-mostrar_interfaces() {
-    echo -e "${BLUE}===== Reporte de Interfaces de Red =====${NC}"
-    echo "Fecha: $(date)"
-    echo -e "=========================="
-    
-    ip a | grep -E '^\d+:' | while read -r line; do
-        interface=$(echo "$line" | cut -d: -f2 | xargs)
-        ip_address=$(ip addr show $interface | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-        
-        if [ -n "$ip_address" ]; then
-            echo -e "${GREEN}$interface${NC}"
-            echo -e "IP: ${YELLOW}$ip_address${NC}"
-            echo
-        fi
-    done
-}
+# Reporte de Interfaces de Red
+echo -e "===== Reporte de Interfaces de Red ====="
+echo -e ""
+ip -br addr show | grep -E 'lo|eth|docker|br|veth|n4m' | while read line; do
+    # Filtrar y mostrar interfaces con IP
+    if echo "$line" | grep -q 'inet'; then
+        interface=$(echo "$line" | awk '{print $1}')
+        ip_address=$(echo "$line" | awk '{print $3}')
+        echo -e "$interface"
+        echo -e "IP: $ip_address"
+        echo -e ""
+    fi
+done
 
-# Función para mostrar los cron jobs del sistema y root
-mostrar_cron() {
-    echo -e "${BLUE}===== Reporte de Cron Jobs =====${NC}"
-    echo "Fecha: $(date)"
-    echo -e "=========================="
-    
-    # Mostrar cron jobs del sistema
-    echo -e "${GREEN}/etc/crontab:${NC}"
-    cat /etc/crontab | grep -v '^#'  # Excluye comentarios
+# Reporte de Cron Jobs
+echo -e "===== Reporte de Cron Jobs ====="
+echo -e ""
 
-    # Mostrar cron jobs de root
-    echo -e "${GREEN}Cron Jobs de root:${NC}"
-    crontab -l -u root
-}
+# Mostrar Cron Jobs del usuario root
+echo -e "Cron Jobs del usuario root:"
+crontab -l -u root 2>/dev/null || echo -e "No se encontraron Cron Jobs para el usuario root."
+echo -e ""
 
-# Ejecutar las funciones
-mostrar_interfaces
-mostrar_cron
+# Mostrar archivos en cron.d
+echo -e "Archivos en /etc/cron.d:"
+ls /etc/cron.d/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.d."
+echo -e ""
+
+# Mostrar archivos en cron.daily
+echo -e "Archivos en /etc/cron.daily:"
+ls /etc/cron.daily/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.daily."
+echo -e ""
+
+# Mostrar archivos en cron.hourly
+echo -e "Archivos en /etc/cron.hourly:"
+ls /etc/cron.hourly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.hourly."
+echo -e ""
+
+# Mostrar archivos en cron.monthly
+echo -e "Archivos en /etc/cron.monthly:"
+ls /etc/cron.monthly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.monthly."
+echo -e ""
+
+# Mostrar archivos en cron.weekly
+echo -e "Archivos en /etc/cron.weekly:"
+ls /etc/cron.weekly/ 2>/dev/null || echo -e "No se encontraron archivos en /etc/cron.weekly."
+echo -e ""
+
+# Mostrar el contenido de /etc/crontab
+echo -e "Contenido de /etc/crontab:"
+cat /etc/crontab
