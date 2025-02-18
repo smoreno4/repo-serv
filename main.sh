@@ -32,20 +32,18 @@ color_echo "green" "===== Reporte de Interfaces de Red ====="
 echo ""
 
 # Mostrar interfaces de red con IP
-ip -br addr show | grep -E 'lo|eth|docker|br|veth|n4m' | while read line; do
-    if echo "$line" | grep -q 'inet'; then
-        interface=$(echo "$line" | awk '{print $1}')
-        ip_address=$(echo "$line" | awk '{print $3}')
-        color_echo "yellow" "$interface"
-        color_echo "green" "IP: $ip_address"
-        echo ""
-    fi
+ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}' | while read line; do
+    interface=$(echo "$line" | awk '{print $2}')
+    ip_address=$(echo "$line" | awk '{print $1}')
+    color_echo "yellow" "$interface"
+    color_echo "green" "IP: $ip_address"
+    echo ""
 done
 
 # Reporte de Cron Jobs
 color_echo "green" "===== Reporte de Cron Jobs ====="
 echo ""
 
-# Mostrar el contenido de /etc/crontab
+# Mostrar el contenido de /etc/crontab, eliminando comentarios y líneas innecesarias
 color_echo "yellow" "Contenido de /etc/crontab:"
-cat /etc/crontab
+grep -vE '(^#|^$)' /etc/crontab
