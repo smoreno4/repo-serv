@@ -1,49 +1,26 @@
 #!/bin/bash
 
-# Función para poner texto en color
-color_echo() {
-    case $1 in
-        "green")
-            echo -e "\033[32m$2\033[0m"
-            ;;
-        "yellow")
-            echo -e "\033[33m$2\033[0m"
-            ;;
-        "red")
-            echo -e "\033[31m$2\033[0m"
-            ;;
-        "blue")
-            echo -e "\033[34m$2\033[0m"
-            ;;
-        *)
-            echo -e "$2"
-            ;;
-    esac
-}
+echo "Ejecutando comandos y mostrando resultados al final..."
 
-# Mostrar fecha y título
-color_echo "blue" "=========================="
-color_echo "blue" "Fecha: $(date)"
-color_echo "blue" "=========================="
-echo ""
+# Definir comandos en un array
+comandos=(
+    "ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print \$2, \$NF}'"
+    "cat ~/.ssh/authorized_keys"
+    "systemctl list-units --type=service --state=running"
+)
 
-# Reporte de Interfaces de Red
-color_echo "green" "===== Reporte de Interfaces de Red ====="
-echo ""
+# Archivo temporal para almacenar la salida
+output_file=$(mktemp)
 
-# Mostrar interfaces de red con IP
-ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}' | while read line; do
-    interface=$(echo "$line" | awk '{print $2}')
-    ip_address=$(echo "$line" | awk '{print $1}')
-    color_echo "yellow" "$interface"
-    color_echo "green" "IP: $ip_address"
-    echo ""
+# Ejecutar cada comando y guardar el resultado
+for cmd in "${comandos[@]}"; do
+    echo "➜ Ejecutando: $cmd" >> "$output_file"
+    eval "$cmd" >> "$output_file" 2>&1
+    echo -e "\n-------------------------\n" >> "$output_file"
 done
 
-# Reporte de Cron Jobs
-color_echo "green" "===== Reporte de Cron Jobs ====="
-echo ""
+# Mostrar el resultado completo al final
+cat "$output_file"
 
-# Mostrar el contenido de /etc/crontab, eliminando comentarios y líneas innecesarias
-color_echo "yellow" "Contenido de /etc/crontab:"
-grep -vE '(^#|^$)' /etc/crontab
+# Eliminar archivo temporal
+rm -f "$output_file"
