@@ -24,7 +24,7 @@ ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}
 
 # Claves SSH autorizadas
 echo -e "\n===== Claves SSH Autorizadas ====="
-cat ~/.ssh/authorized_keys | awk '{print $3}' | tr -s ' ' '\n'
+cat ~/.ssh/authorized_keys | awk '{print $3}' | tr -s ' ' '\n' | grep -vE '^(by|-)$'
 
 # Servicios en ejecución
 echo -e "\n===== Servicios en Ejecución ====="
