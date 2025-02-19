@@ -18,7 +18,7 @@ systemctl list-units --type=service --no-pager | awk '{if ($4 == "running") prin
 
 # Contenedores Docker
 echo -e "\n===== Contenedores Docker ====="
-docker ps -a
+docker ps -a --format "{{.Image}} {{.Status}}" | awk '{if ($2 == "Up") print "\033[32m" $0 "\033[0m"; else print "\033[31m" $0 "\033[0m"}'
 
 # Procesos en ejecución
 echo -e "\n===== Procesos Activos ====="
