@@ -14,7 +14,7 @@ cat ~/.ssh/authorized_keys
 
 # Servicios en ejecución
 echo -e "\n===== Servicios en Ejecución ====="
-systemctl list-units --type=service --state=running --no-pager
+systemctl list-units --type=service --no-pager | awk '{print $1}'
 
 # Contenedores Docker
 echo -e "\n===== Contenedores Docker ====="
@@ -22,7 +22,7 @@ docker ps -a
 
 # Procesos en ejecución
 echo -e "\n===== Procesos Activos ====="
-ps aux
+ps aux | awk '{print $1,"----" $11}'
 
 # Contenido de /etc/crontab
 echo -e "\n===== Contenido de /etc/crontab ====="
