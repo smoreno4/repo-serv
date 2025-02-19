@@ -26,14 +26,14 @@ ps aux | awk '{print $1,"----" $11}'
 
 # Contenido de /etc/crontab
 echo -e "\n===== Contenido de /etc/crontab ====="
-grep -v -e '^#' -e '^ *$' /etc/crontab
+grep -v -e '^#' -e '^ *$' -e 'anacron' -e '^MAILTO=' -e '^SHELL=' -e '^PATH=' /etc/crontab
 
 # Listado de archivos en /root
 echo -e "\n===== Contenido de /root ====="
-ls -la /root
+ls -la /root | awk '{if ($1 ~ /^d/) print "\033[0;34m" $3"/" $9 "\033[0m"; else print "\033[0;32m" $3"/" $9 "\033[0m"}'
 
 # Listado de archivos en /opt
 echo -e "\n===== Contenido de /opt ====="
-ls -la /opt
+ls -la /opt | awk '{if ($1 ~ /^d/) print "\033[0;34m" $3"/" $9 "\033[0m"; else print "\033[0;32m" $3"/" $9 "\033[0m"}'
 
 echo -e "\n===== Fin del Reporte ====="
