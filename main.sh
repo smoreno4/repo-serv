@@ -14,7 +14,7 @@ cat ~/.ssh/authorized_keys | awk '{print $3}' | tr -s ' ' '\n'
 
 # Servicios en ejecución
 echo -e "\n===== Servicios en Ejecución ====="
-systemctl list-units --type=service --no-pager | awk '{print $1}'
+systemctl list-units --type=service --no-pager | awk '{if ($4 == "running") print "\033[32m" $1 "\033[0m"; else if ($4 == "exited") print "\033[31m" $1 "\033[0m"}'
 
 # Contenedores Docker
 echo -e "\n===== Contenedores Docker ====="
