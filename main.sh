@@ -1,26 +1,26 @@
 #!/bin/bash
 
-echo "Ejecutando comandos y mostrando resultados al final..."
+# Fecha y hora de ejecución
+echo "=========================="
+echo "Fecha: $(date)"
+echo "=========================="
 
-# Definir comandos en un array
-comandos=(
-    "ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print \$2, \$NF}'"
-    "cat ~/.ssh/authorized_keys"
-    "systemctl list-units --type=service --state=running"
-)
+echo -e "\n===== Reporte de Interfaces de Red ====="
+ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}'
 
-# Archivo temporal para almacenar la salida
-output_file=$(mktemp)
+echo -e "\n===== Claves SSH Autorizadas ====="
+cat ~/.ssh/authorized_keys
 
-# Ejecutar cada comando y guardar el resultado
-for cmd in "${comandos[@]}"; do
-    echo "➜ Ejecutando: $cmd" >> "$output_file"
-    eval "$cmd" >> "$output_file" 2>&1
-    echo -e "\n-------------------------\n" >> "$output_file"
-done
+echo -e "\n===== Servicios en Ejecución ====="
+systemctl list-units --type=service --state=running
 
-# Mostrar el resultado completo al final
-cat "$output_file"
+echo -e "\n===== Contenedores Docker ====="
+docker ps -a
 
-# Eliminar archivo temporal
-rm -f "$output_file"
+echo -e "\n===== Procesos en Ejecución ====="
+ps aux
+
+echo -e "\n===== Contenido de /etc/crontab ====="
+cat /etc/crontab
+
+echo -e "\n===== FIN DEL REPORTE ====="
