@@ -14,7 +14,7 @@ cat ~/.ssh/authorized_keys
 
 # Servicios en ejecución
 echo -e "\n===== Servicios en Ejecución ====="
-systemctl list-units --type=service --state=running
+systemctl list-units --type=service --state=running --no-pager
 
 # Contenedores Docker
 echo -e "\n===== Contenedores Docker ====="
