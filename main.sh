@@ -10,7 +10,7 @@ ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}
 
 # Claves SSH autorizadas
 echo -e "\n===== Claves SSH Autorizadas ====="
-cat ~/.ssh/authorized_keys
+cat ~/.ssh/authorized_keys | awk '{print $3}' | tr -s ' ' '\n'
 
 # Servicios en ejecución
 echo -e "\n===== Servicios en Ejecución ====="
@@ -26,7 +26,7 @@ ps aux | awk '{print $1,"----" $11}'
 
 # Contenido de /etc/crontab
 echo -e "\n===== Contenido de /etc/crontab ====="
-cat /etc/crontab
+grep -v -e '^#' -e '^ *$' /etc/crontab
 
 # Listado de archivos en /root
 echo -e "\n===== Contenido de /root ====="
