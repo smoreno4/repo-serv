@@ -1,78 +1,58 @@
 #!/bin/bash
 
-echo "=========================="
-echo "Fecha: $(date)"
-echo "=========================="
+# Script para verificar exporters comunes en el servidor local
 
-# Reporte de Sistema
-echo -e "\n===== Reporte de Disco Duro ====="
-df -h | awk '{if ($1 ~ /^\/dev/) { 
-    usage = substr($5, 1, length($5)-1); 
-    if (usage > 85) 
-        print "\033[31m" $1, $2, $4, $5 "\033[0m"; 
-    else 
-        print "\033[32m" $1, $2, $4, $5 "\033[0m"; 
-}}'
+echo "=== Diagnóstico de exporters comunes en $(hostname) ==="
+echo ""
 
-# Reporte de CPU y RAM
-echo -e "\n===== Reporte de CPU y RAM ====="
-cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}'); if [ $(echo "$cpu_usage > 85" | awk '{if ($1 > 85) print 1; else print 0}') -eq 1 ]; then echo -e "CPU=\033[31m$cpu_usage%\033[0m"; else echo -e "CPU=\033[32m$cpu_usage%\033[0m"; fi; free -m | awk '/Mem/ {usage=$3/$2*100; if (usage > 85) print "RAM=\033[31m" $3 "MB/" $2 "MB (" int(usage) "%)\033[0m"; else print "RAM=\033[32m" $3 "MB/" $2 "MB (" int(usage) "%)\033[0m"}'
+# Función para verificar si un proceso está corriendo
+is_running() {
+  pgrep -f "$1" > /dev/null 2>&1
+  echo $?
+}
 
-# Reporte de Interfaces de Red
-echo -e "\n===== Reporte de Interfaces de Red ====="
-ip addr show | grep -E 'lo|eth|docker|br|veth|n4m' | awk '/inet/ {print $2, $NF}'
+# Función para encontrar puertos en uso por un proceso
+find_ports() {
+  local proc_name=$1
+  ss -tulnp 2>/dev/null | grep "$proc_name" | awk '{print $5}' | sed -E 's/.*:([0-9]+)/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//'
+}
 
-# Claves SSH autorizadas
-echo -e "\n===== Claves SSH Autorizadas ====="
-cat ~/.ssh/authorized_keys | awk '{print $3}' | tr -s ' ' '\n' | grep -vE '^(by|-)$'
-
-# Servicios en ejecución
-echo -e "\n===== Servicios en Ejecución ====="
-if command -v systemctl &> /dev/null; then
-    systemctl list-units --type=service --no-pager | awk '{if ($4 == "running") print "\033[32m" $1 "\033[0m"; else if ($4 == "exited") print "\033[31m" $1 "\033[0m"}'
+# Verificar node_exporter
+echo "- node_exporter:"
+nr=$(is_running node_exporter)
+if [[ $nr -eq 0 ]]; then
+  ports=$(find_ports node_exporter)
+  echo "  RUNNING - Puertos: ${ports:-no encontrado}"
 else
-    service --status-all | awk '{print "\033[34m" $2 "\033[0m | " $3}'
+  echo "  NOT RUNNING"
 fi
+echo ""
 
-# Contenedores Docker
-echo -e "\n===== Contenedores Docker ====="
-docker ps -a --format "{{.Image}} {{.Status}}" | awk '{if ($2 == "Up") print "\033[32m" $0 "\033[0m"; else print "\033[31m" $0 "\033[0m"}'
+# Verificar systemd_exporter
+echo "- systemd_exporter:"
+sr=$(is_running systemd_exporter)
+if [[ $sr -eq 0 ]]; then
+  ports=$(find_ports systemd_exporter)
+  echo "  RUNNING - Puertos: ${ports:-no encontrado}"
+else
+  echo "  NOT RUNNING"
+fi
+echo ""
 
-# Procesos en ejecución
-echo -e "\n===== Procesos Activos ====="
-ps aux | awk '{print $1,"----" $11}' | sort | uniq
+# Verificar mongodb_exporter
+echo "- mongodb_exporter:"
+mr=$(is_running mongodb_exporter)
+if [[ $mr -eq 0 ]]; then
+  ports=$(find_ports mongodb_exporter)
+  echo "  RUNNING - Puertos: ${ports:-no encontrado}"
+else
+  echo "  NOT RUNNING"
+fi
+echo ""
 
-# Cron Jobs
-echo -e "\n===== Cron Jobs de Usuario ====="
-for user in $(cut -f1 -d: /etc/passwd); do
-    crontab -u $user -l && echo -e "Tareas programadas de $user:" || echo "No hay tareas programadas para $user"
-done
-echo -e "\n===== Cron Jobs Globales (en /etc/crontab) ====="
-cat /etc/crontab
-echo -e "\n===== Contenido de Cron Directories ====="
-ls -la /etc/cron.daily/ /etc/cron.hourly/ /etc/cron.weekly/ /etc/cron.monthly/
+echo "=== Resumen ==="
+echo "node_exporter: $( [[ $nr -eq 0 ]] && echo 'ON' || echo 'OFF' )"
+echo "systemd_exporter: $( [[ $sr -eq 0 ]] && echo 'ON' || echo 'OFF' )"
+echo "mongodb_exporter: $( [[ $mr -eq 0 ]] && echo 'ON' || echo 'OFF' )"
 
-# Listado de archivos en /root
-echo -e "\n===== Contenido de /root ====="
-ls -la /root | awk '{if ($1 ~ /^d/) print "\033[0;34m" $3"/" $9 "\033[0m"; else print "\033[0;32m" $3"/" $9 "\033[0m"}'
-
-# Listado de archivos en /opt
-echo -e "\n===== Contenido de /opt ====="
-ls -la /opt | awk '{if ($1 ~ /^d/) print "\033[0;34m" $3"/" $9 "\033[0m"; else print "\033[0;32m" $3"/" $9 "\033[0m"}'
-
-# Listado de archivos en servicios
-echo -e "\n===== Contenido de puertos y users ====="
-ss -tulnp | awk '{print $5, $7}' | grep -oP '([0-9\.:*]+:[0-9]+|:::?[0-9]+)\s+users:.*' | sed 's/(pid=[0-9]*,fd=[0-9]*)//g' | sed 's/users://g' | sed 's/"//g' | sed 's/(//g' | sed 's/,.*)//g' | awk -F '[ :)]+' '{print $1 ":" $2, $3}' | sed 's/^[*:]*://' | awk '{print "\033[34m" $1 "\033[0m | \033[32m" $2 "\033[0m"}'
-
-# Contenido de iptables
-echo -e "\n===== Contenido de iptables ====="
-
-# Sesiones de screen
-echo -e "\n===== Sesiones de Screen ====="
-screen -ls
-
-# Contenido de rc.local
-echo -e "\n===== Contenido de /etc/rc.local ====="
-cat /etc/rc.local
-
-echo -e "\n===== Fin del Reporte ====="
+# Fin del script
