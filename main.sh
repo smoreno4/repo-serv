@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Script para verificar exporters comunes y mostrar URLs oficiales de descarga
-
-echo "=== Diagnóstico de exporters comunes en $(hostname -f) ==="
+# Obtener hostname completo
+HOSTNAME_FULL=$(hostname -f)
+echo "========================================="
+echo "Reporte de exporters en: $HOSTNAME_FULL"
+echo "========================================="
 echo ""
 
 declare -A exporters
@@ -30,23 +32,40 @@ exporters_urls=(
   ["postgres_exporter"]="https://github.com/prometheus-community/postgres_exporter/releases/latest/download/postgres_exporter-*-linux-amd64.tar.gz"
 )
 
+# Función para verificar si un proceso está corriendo
+is_running() {
+  pgrep -f "$1" > /dev/null 2>&1
+  echo $?
+}
+
+# Función para encontrar puertos en uso por un proceso
+find_ports() {
+  local proc_name=$1
+  ss -tulnp 2>/dev/null | grep "$proc_name" | awk '{print $5}' | sed -E 's/.*:([0-9]+)/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//'
+}
+
+# Diagnóstico y URL
+echo "=== Diagnóstico y URLs de exporters en: $HOSTNAME_FULL ==="
+echo ""
+
 for exp in "${!exporters[@]}"; do
   echo "- $exp:"
-  nr=$(pgrep -f "${exporters[$exp]}" > /dev/null; echo $?)
+  nr=$(is_running "${exporters[$exp]}")
   if [[ $nr -eq 0 ]]; then
-    ports=$(ss -tulnp 2>/dev/null | grep "${exporters[$exp]}" | awk '{print $5}' | sed -E 's/.*:([0-9]+)/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//')
+    ports=$(find_ports "${exporters[$exp]}")
     echo "  RUNNING - Puertos: ${ports:-no encontrado}"
   else
     echo "  NOT RUNNING"
   fi
-  echo "  Oficial URL: ${exporters_urls[$exp]}"
+  echo "  URL oficial: ${exporters_urls[$exp]}"
   echo ""
 done
 
-echo "=== Resumen ==="
+# Resumen final con hostname
+echo "=== RESUMEN FINAL en: $HOSTNAME_FULL ==="
 for exp in "${!exporters[@]}"; do
-  nr=$(pgrep -f "${exporters[$exp]}" > /dev/null; echo $?)
+  nr=$(is_running "${exporters[$exp]}")
   printf "%-17s : %s\n" "$exp" "$( [[ $nr -eq 0 ]] && echo 'ON' || echo 'OFF' )"
 done
 
-# Fin del script
+# Fin
